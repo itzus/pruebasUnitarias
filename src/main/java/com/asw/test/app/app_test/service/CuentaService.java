@@ -1,10 +1,14 @@
 package com.asw.test.app.app_test.service;
 
-import com.asw.test.app.app_test.dto.CuentaDto;
-import com.asw.test.app.app_test.exceptions.BancoException;
-
 import java.math.BigDecimal;
 import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import com.asw.test.app.app_test.dto.CuentaDto;
+import com.asw.test.app.app_test.entities.CuentaEntity;
+import com.asw.test.app.app_test.exceptions.BancoException;
 
 public interface CuentaService {
 
@@ -16,5 +20,7 @@ public interface CuentaService {
 
 	List<CuentaDto> cuentasPorUsuario(Integer usuarioId);
 
-	void retirar(BigDecimal monto) throws BancoException;
+	Page<CuentaEntity> cuentasfindAll(Pageable pagina);
+
+	void retirarCuentaBanco(BigDecimal monto) throws BancoException;
 }

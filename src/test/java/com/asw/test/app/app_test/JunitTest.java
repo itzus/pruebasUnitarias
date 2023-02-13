@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -36,12 +37,13 @@ public class JunitTest {
 
 	@Test
 	@Order(2)
-	void consultarSaldo() {
+	@DisplayName("verificación consulta Saldo de la cuenta 4, para confirmar que no es menor que cero")
+	void consultarSaldoCuentaCuatroYVerificarQueSeaMayorCero() {
 		try {
 			BigDecimal respuesta = cuentaService.consultarSaldo(4);
 			log.info("respuestaConsultarSaldo:" + respuesta);
-			assertNotEquals(null,respuesta);
-			assertNotEquals(respuesta, BigDecimal.ZERO);
+			assertNotEquals(null, respuesta, "La cuenta 4 no existe o no se puede determinar el saldo");
+			assertTrue(respuesta.compareTo(BigDecimal.ZERO) > 0, "El saldo de la cuenta no es superior a cero");
 		} catch (Exception e) {
 			fail(e);
 		}
@@ -52,8 +54,8 @@ public class JunitTest {
 	void consultarSaldoVariosAssert() {
 		try {
 			List<CuentaDto> cuentas = cuentaService.cuentasPorUsuario(1);
-			assertNotNull(cuentas);
-			assertFalse(cuentas.isEmpty(), "");
+			assertNotNull(cuentas, "las cuentas llegaron nulas");
+			assertFalse(cuentas.isEmpty(), "las cuentas llegaron vacias");
 			assertEquals(0, cuentas.size(), "Supera el tamaño esperado");
 			assertEquals(5, cuentas.get(0).getId(), "El registro no corresponde"); // No se va a realizar pues falla en
 																					// la anterior
@@ -67,11 +69,12 @@ public class JunitTest {
 	@Order(5)
 	void consultarSaldoAssertAll() {
 		try {
-			List<CuentaDto> cuentas = cuentaService.cuentasPorUsuario(1);
-			assertAll(() -> assertNotNull(cuentas), 
-					() -> assertTrue(cuentas.isEmpty(), "no esta vacio"), // va a fallar					// aca
-					() -> assertEquals(1, cuentas.size(), "El tamaño es superior al limite") // pero va a hacer esta
-																								// ultima validacion
+			List<CuentaDto> cuentas = cuentaService.cuentasPorUsuario(8);
+			assertAll(() -> assertNotNull(cuentas, "las cuentas llegaron nulas"),
+					() -> assertFalse(cuentas.isEmpty(), "no esta vacio"), // va a fallar // aca
+					() -> assertEquals(1, cuentas.size(), "El tamaño es superior a 1"),
+					() -> assertEquals(3, cuentas.size(), "El tamaño es superior a 0") // pero va a hacer esta
+																						// ultima validacion
 			);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -92,10 +95,13 @@ public class JunitTest {
 
 	@Test
 	@Order(1)
+	@DisplayName("verificación retiro no exitoso por cuenta no existente")
 	void retirarDineroAssertThrows() {
-		BancoException e = assertThrows(BancoException.class, () -> cuentaService.retirar(5, BigDecimal.TEN));
+		BancoException e = assertThrows(BancoException.class, () -> cuentaService.retirar(4, BigDecimal.TEN));
 		log.info(e.getMessage());
-		assertEquals(e.getCode(), "101", "El Codigo de excepcion no era el esperado");
+		assertEquals(e.getCode(), "100",
+				"El Codigo de excepcion no era el esperado: se esperaba error por cuenta no existente y arrojo:"
+						+ e.getMessage());
 	}
 
 	@Test

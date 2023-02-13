@@ -1,5 +1,7 @@
 package com.asw.test.app.app_test;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,25 +12,25 @@ import lombok.extern.log4j.Log4j2;
 
 @SpringBootTest
 @Log4j2
-public class AppTestJunit {
+class PruebaInicialContextoErroresJunitTest {
 
 	@Autowired
 	public CuentaService cuentaService;
 
 	@Test
-	void prueba() {
-			log.info("puede no funcionar");
+	void pruebaExitosaParaJunitPeroNoParaElNegocio() {
+		cuentaService.consultarSaldo(4);
+		fail("la consulta de saldo no funciono");
 	}
-	
+
 	@Test
-	void consultarSaldo() {
-			cuentaService.consultarSaldo(4);
+	void pruebaSinContexto() {
+		log.info("puede no funcionar");
 	}
-	
+
 	@Test
-	void consultarSaldoError() {
-			throw new RuntimeException();
+	void pruebaJunitMostrarComoSeMideUnaExcepcionNoControlada() {
+		throw new RuntimeException();
 	}
-	
 
 }

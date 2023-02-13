@@ -14,8 +14,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.Optional;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -35,30 +37,49 @@ import lombok.extern.log4j.Log4j2;
 
 @SpringBootTest
 @Log4j2
-public class MockitoTest {
+ class MockitoTest {
 
 	@MockBean
 	public CuentaRepository cuentaRepository;
 
 	@Autowired
 	public CuentaService cuentaService;
-
+ 
 	@Test
+	@DisplayName("Consultar que el saldo sea diferente de 0")
 	void consultar() {
+		try {
+			CuentaEntity cuenta = CuentaEntity.builder()
+					.id(10)
+					.saldo(new BigDecimal(10L))
+					.build();
+			when(cuentaRepository.findById(1)).thenReturn(Optional.of(cuenta));
+			when(cuentaRepository.findById(98)).thenThrow(new SQLException("No se encuentra el registro"));
+			BigDecimal respuesta = cuentaService.consultarSaldo(1);
+			log.info("respuestaConsultarSaldo:" + respuesta); 
+			log.info("Cuenta:" + cuenta.toString());
+			assertNotEquals(null, respuesta, "La respuesta esta vacia");
+			assertNotEquals( BigDecimal.ZERO, respuesta, "El saldo tiene que ser mayor a 0");
+		} catch (Exception e) {
+			fail(e);
+		}
+	}
+	
+	@Test
+	@DisplayName("retiro saldo insuficiente")
+	void retirarDineroInsuficiente() {
 		try {
 			CuentaEntity cuenta = CuentaEntity.builder()
 					.id(10)
 					.tipo("CA")
 					.banco(new BancoEntity())
 					.usuario(new UsuarioEntity())
-					.saldo(new BigDecimal(102L))
+					.saldo(new BigDecimal(500L))
 					.build();
-			when(cuentaRepository.findById(105)).thenReturn(Optional.of(cuenta));
-			BigDecimal respuesta = cuentaService.consultarSaldo(105);
-			log.info("respuestaConsultarSaldo:" + respuesta); 
-			log.info("Cuenta:" + cuenta.toString());
-			assertNotEquals(null, respuesta);
-			assertNotEquals( BigDecimal.ZERO, respuesta);
+			when(cuentaRepository.findById(any())).thenReturn(Optional.of(cuenta));
+			BancoException e= assertThrows(BancoException.class, ()->cuentaService.retirar(1, new BigDecimal(100L)));
+			assertNotEquals(null, e, "La respuesta esta vacia");
+			assertEquals( "101", e.getCode(), "Lanzo un tipo de error diferente al esperado: codigo 101");
 		} catch (Exception e) {
 			fail(e);
 		}
@@ -94,7 +115,7 @@ public class MockitoTest {
 					.saldo(new BigDecimal(100002L))
 					.build();
 			when(cuentaRepository.findById(argThat(arg -> arg > 0 && arg < 10))).thenReturn(Optional.of(cuenta));
-			BigDecimal respuesta = cuentaService.consultarSaldo(7);
+			BigDecimal respuesta = cuentaService.consultarSaldo(11);
 			log.info("respuestaConsultarSaldo:" + respuesta);
 			assertNotEquals(respuesta, null);
 		} catch (Exception e) {
@@ -121,7 +142,7 @@ public class MockitoTest {
 		System.out.println("respuestaFallida");
 		BancoException e = assertThrows(BancoException.class, () -> cuentaService.retirar(5, BigDecimal.TEN));
 		verify(cuentaRepository, never()).save(any());
-		verify(cuentaRepository, times(2)).findById(5);
+		verify(cuentaRepository).findById(5);
 		assertNotEquals(e, null);
 	}
 
@@ -183,7 +204,7 @@ public class MockitoTest {
 					.saldo(new BigDecimal(102L))
 					.build();
 			when(cuentaRepository.findById(anyInt())).thenReturn(Optional.of(cuenta));
-			cuentaService.retirar(BigDecimal.TEN);
+			cuentaService.retirarCuentaBanco(BigDecimal.TEN);
 			ArgumentCaptor<CuentaEntity> cuentaRetiro = ArgumentCaptor.forClass(CuentaEntity.class);
 			verify(cuentaRepository).save(cuentaRetiro.capture());
 			log.info("cuentaRetiro:" + cuentaRetiro.getValue().toString());

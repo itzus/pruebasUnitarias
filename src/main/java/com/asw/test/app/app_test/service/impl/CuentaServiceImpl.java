@@ -5,7 +5,11 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import javax.sound.midi.MidiDevice.Info;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +20,10 @@ import com.asw.test.app.app_test.repository.CuentaRepository;
 import com.asw.test.app.app_test.service.CuentaService;
 import com.asw.test.app.app_test.util.Converter;
 
+import lombok.extern.log4j.Log4j2;
+
 @Service
+@Log4j2
 public class CuentaServiceImpl implements CuentaService {
 
 	@Autowired
@@ -46,12 +53,13 @@ public class CuentaServiceImpl implements CuentaService {
 			throw new BancoException("101", "Dinero insuficiente");
 		}
 		cuentaEntity.setSaldo(nuevoSaldo);
-		cuentaRepository.save(cuentaEntity);
+		CuentaEntity respuesta = cuentaRepository.save(cuentaEntity);
+		log.info("respuesta:" + respuesta.getTipo());
 	}
 
 	@Transactional
 	@Override
-	public void retirar(BigDecimal monto) throws BancoException {
+	public void retirarCuentaBanco(BigDecimal monto) throws BancoException {
 		Optional<CuentaEntity> cuentaOpt = cuentaRepository.findById(11);
 		CuentaEntity cuentaEntity = cuentaOpt
 				.orElseThrow(() -> new BancoException("100", "No Existe cuenta con id " + 11));
@@ -84,5 +92,10 @@ public class CuentaServiceImpl implements CuentaService {
 			return cuentas;
 		}
 		return null;
+	}
+
+	@Override
+	public Page<CuentaEntity> cuentasfindAll(Pageable pagina) {
+		return cuentaRepository.findAll(pagina);
 	}
 }
