@@ -13,11 +13,11 @@ import org.springframework.util.CollectionUtils;
 public class Converter {
 
 	@Autowired
-	private ModelMapper mapper;
+	private ModelMapper modelMapper;
 
 	@SuppressWarnings("unchecked")
 	public <T> T convert(Object origen, T destino) {
-		return ((T) mapper.map(origen, destino.getClass()));
+		return ((T) modelMapper.map(origen, destino.getClass()));
 	}
 
 	public <O, T> List<T> convert(List<O> origen, T destino) {
@@ -27,4 +27,5 @@ public class Converter {
 		origen.stream().forEach(x -> retorno.add( convert(x, destino)));
 		return retorno;
 	}
+	
 }
